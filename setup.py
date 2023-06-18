@@ -38,6 +38,7 @@ setup(
         'six',
         'SQLAlchemy',
         'typing_extensions',
-        'Werkzeug'
+        'Werkzeug',
+        'requests'
     ],
 )
