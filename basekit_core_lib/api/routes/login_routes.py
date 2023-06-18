@@ -3,7 +3,7 @@ from basekit_core_lib.api.middlewares.auth_middleware import login
 from flask import Blueprint, request
 
 
-login_routes = Blueprint('/login_routes', __name__, url_prefix='auth')
+login_routes = Blueprint('login_routes', __name__, url_prefix='auth')
 
 @login_routes.route('/do_login', methods=['POST'])
 @handle_exceptions
