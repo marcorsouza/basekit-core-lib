@@ -48,7 +48,6 @@ def authorize(tag_name: str, authorize):
             auth_token = auth_header.replace('Bearer ', '')
             if config.API_AUTH_URL is not None:
                 url = f'{config.API_AUTH_URL}/check'
-                print(url)
                 has_permission = check_permission_with_auth(username, tag_name, config.APPLICATION_ACRONYM, authorize_value, url, auth_token)
             else:
                 print('local')
@@ -64,7 +63,7 @@ def authorize(tag_name: str, authorize):
     return decorator
 
 def check_permission_with_auth(username, tag_name, acronym, action_name, auth_url, auth_token):
-    # Realiza a autenticação com a API
+    # Realiza a autorização com a API
     headers = {'Authorization': f'Bearer {auth_token}'}
     response = requests.post(auth_url, headers=headers, json={
         'username': username,
@@ -73,7 +72,7 @@ def check_permission_with_auth(username, tag_name, acronym, action_name, auth_ur
         'action_name': action_name
     })
 
-    # Verifica o resultado da autenticação
+    # Verifica o resultado da autorização
     if response.status_code == 200:
         return True
     else:
@@ -93,6 +92,18 @@ def __check_permission(username, tag_name, acronym, action_name):
         return True
      
     return False
+
+def do_login(username, password):
+    
+    # Realiza a autenticação com a API
+    url = f'{config.API_AUTH_URL}/login'
+    response = requests.post(url, json={
+        'username': username,
+        'password': password
+    })
+     
+    # Verifica o resultado da autorização
+    return response, response.status_code
 
 class Authorize(Enum):
     CREATE = "CREATE"
