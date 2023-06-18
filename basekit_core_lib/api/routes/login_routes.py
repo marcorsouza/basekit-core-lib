@@ -11,4 +11,5 @@ def do_login():
     data = request.get_json()
     username = data['username']
     password = data['password']
-    return login(username, password)
+    result = login(username, password)
+    return result

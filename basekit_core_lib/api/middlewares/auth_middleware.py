@@ -103,7 +103,7 @@ def login(username, password):
     })
      
     # Verifica o resultado da autorização
-    return response, response.status_code
+    return jsonify(response.json()), response.status_code
 
 class Authorize(Enum):
     CREATE = "CREATE"
