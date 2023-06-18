@@ -2,7 +2,7 @@ from datetime import datetime
 import functools
 
 from flask import Response, request
-from config.helpers import logger
+from basekit_core_lib.config.helpers import logger
 
 def log_decorator(func):
         @functools.wraps(func)
