@@ -5,17 +5,18 @@ Certifique-se de que sua estrutura de diretórios esteja organizada da seguinte 
 
 arduino
 Copy code
-basekit_core_lib/
-    __init__.py
-    config/
+core_lib/
+    core_lib/
         __init__.py
-        config.py
-    utils/
-        __init__.py
-        file_utils.py
-setup.py
-README.md
-LICENSE
+        config/
+            __init__.py
+            config.py
+        utils/
+            __init__.py
+            file_utils.py
+    setup.py
+    README.md
+    LICENSE
 Código-fonte:
 Coloque o código-fonte do core-lib dentro da estrutura de diretórios. Certifique-se de que todos os módulos e pacotes estejam corretamente organizados. Certifique-se também de ter um arquivo __init__.py vazio nos diretórios config e utils para torná-los pacotes Python.
 

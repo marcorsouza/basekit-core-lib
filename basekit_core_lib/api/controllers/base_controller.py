@@ -17,7 +17,7 @@ class BaseController(ABC):
             logger.info("get_all successful")
             return self.build_success_response(data)
         except Exception as e:
-            logger.error("get_all error: %s", str(e))
+            logger.error(f"get_all error: {str(e)}")
             return self.build_error_response(str(e), 500)
     
     @log_decorator
@@ -28,10 +28,10 @@ class BaseController(ABC):
                 logger.info("get_by_id successful")
                 return self.build_success_response(data)
             else:
-                logger.error("get_by_id error: Object with id %s not found", id)
+                logger.error(f"get_by_id error: Object with id {id} not found",)
                 return self.build_error_response(f"Object with id {id} not found", 404)
         except Exception as e:
-            logger.error("get_by_id error: %s", str(e))
+            logger.error(f"get_by_id error: {str(e)}")
             return self.build_error_response(str(e), 500)
     
     @log_decorator
@@ -45,7 +45,7 @@ class BaseController(ABC):
             logger.error("create error: Integrity error")
             return self.build_error_response("Integrity error", 400)
         except Exception as e:
-            logger.error("create error: %s", str(e))
+            logger.error(f"create error: {str(e)}")
             return self.build_error_response(str(e), 500)
     
     @log_decorator
@@ -57,13 +57,13 @@ class BaseController(ABC):
                 logger.info("update successful")
                 return self.build_success_response(obj)
             else:
-                logger.error("update error: Object with id %s not found", id)
+                logger.error(f"update error: Object with id {id} not found")
                 return self.build_error_response(f"Object with id {id} not found", 404)
         except IntegrityError as e:
             logger.error("update error: Integrity error")
             return self.build_error_response("Integrity error", 400)
         except Exception as e:
-            logger.error("update error: %s", str(e))
+            logger.error(f"update error: {str(e)}")
             return self.build_error_response(str(e), 500)
     
     @log_decorator
@@ -74,10 +74,10 @@ class BaseController(ABC):
                 logger.info("delete successful")
                 return self.build_success_response({"message": "Object deleted successfully"})
             else:
-                logger.error("delete error: Object with id %s not found", id)
+                logger.error(f"delete error: Object with id {id} not found")
                 return self.build_error_response(f"Object with id {id} not found", 404)
         except Exception as e:
-            logger.error("delete error: %s", str(e))
+            logger.error(f"delete error: {str(e)}")
             return self.build_error_response(str(e), 500)
     
     def build_success_response(self, data, status_code=200):

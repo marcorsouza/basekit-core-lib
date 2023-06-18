@@ -11,8 +11,6 @@ setup(
         'attrs',
         'bcrypt',
         'blinker',
-        'certifi',
-        'charset-normalizer',
         'click',
         'colorama',
         'dependency-injector',
@@ -23,7 +21,6 @@ setup(
         'Flask-SQLAlchemy',
         'flask-swagger',
         'greenlet',
-        'idna',
         'injector',
         'itsdangerous',
         'Jinja2',
@@ -38,11 +35,9 @@ setup(
         'pyrsistent',
         'python-dotenv',
         'PyYAML',
-        'requests',
         'six',
         'SQLAlchemy',
         'typing_extensions',
-        'urllib3',
         'Werkzeug'
     ],
 )
