@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from basekit_core_lib.config.helpers import db, config
+from config.helpers import db, config
 class BaseService(ABC):
     
     def __init__(self,model_data: db.Model = None, model_schema = None) -> None:

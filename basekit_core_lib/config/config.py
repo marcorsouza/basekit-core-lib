@@ -1,4 +1,4 @@
-from core_lib.utils.file_utils import get_env, get_key_generator
+from utils.file_utils import get_env, get_key_generator
 import os
 class Config:
     

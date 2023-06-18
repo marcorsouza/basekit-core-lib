@@ -1,7 +1,7 @@
 from functools import wraps
 import inspect
 from flask import jsonify
-from basekit_core_lib.config.helpers import logger
+from config.helpers import logger
 
 def handle_exceptions(func):
 

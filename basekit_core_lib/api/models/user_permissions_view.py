@@ -1,4 +1,4 @@
-from basekit_core_lib.config.helpers import db
+from config.helpers import db
 from sqlalchemy import Column, String, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import composite

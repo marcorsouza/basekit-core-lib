@@ -7,9 +7,9 @@ from enum import Enum
 from functools import wraps
 from flask import jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required, get_jwt
-from basekit_core_lib.api.models.user_permissions_view import UserPermissions
-from basekit_core_lib.utils.file_utils import get_env
-from basekit_core_lib.config.helpers import config
+from api.models.user_permissions_view import UserPermissions
+from utils.file_utils import get_env
+from config.helpers import config
 
 def authenticate(func):
     @wraps(func)

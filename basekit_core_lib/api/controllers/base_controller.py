@@ -3,8 +3,8 @@ from flask import request, jsonify, make_response
 import inspect
 from abc import ABC
 
-from basekit_core_lib.api.middlewares.logger_middleware import log_decorator
-from basekit_core_lib.config.helpers import logger
+from api.middlewares.logger_middleware import log_decorator
+from config.helpers import logger
 
 class BaseController(ABC):
     def __init__(self, service):
