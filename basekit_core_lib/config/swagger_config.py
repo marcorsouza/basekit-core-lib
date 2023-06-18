@@ -1,6 +1,4 @@
-from functools import wraps
 from flasgger import Swagger
-from flask import jsonify, request
 
 def swagger_init_app(app, title, version, description):
     TEMPLATE = {

@@ -7,8 +7,10 @@ class BaseService(ABC):
         self.model_schema = model_schema
         self.config  = config
     
-    def _get_all(self):
-        return self.model_data.query.all()
+    def _get_all(self, filters = None):
+        if filters is None:
+            return self.model_data.query.all()
+        return self.model_data.filter(filters)
 
     def _get_by_id(self, id):
         return self.model_data.query.get(id)
