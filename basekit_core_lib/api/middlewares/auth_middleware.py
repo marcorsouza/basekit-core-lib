@@ -93,7 +93,7 @@ def __check_permission(username, tag_name, acronym, action_name):
      
     return False
 
-def do_login(username, password):
+def login(username, password):
     
     # Realiza a autenticação com a API
     url = f'{config.API_AUTH_URL}/login'
