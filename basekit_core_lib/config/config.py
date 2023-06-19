@@ -6,7 +6,7 @@ class Config:
 
     DEBUG = get_env('DEBUG', False)
     TESTING = get_env('TESTING', False)
-    HOST = get_env('DSV_HOST', '127.0.0.1')
+    HOST = get_env('DSV_HOST', '0.0.0.0')
     PORT = get_env('DSV_PORT', 5000)
 
     LOG_LEVEL = get_env('LOG_LEVEL', 'DEBUG')
@@ -32,8 +32,8 @@ class DevelopmentConfig(Config):
     
     DEBUG = False
     TESTING = False
-    HOST = get_env('DSV_HOST', "127.0.0.1")
-    PORT = get_env('DSV_PORT', 5000)
+    HOST = get_env('DSV_HOST', "0.0.0.0")
+    PORT = get_env('DSV_PORT', 3000)
     
     LOG_LEVEL=get_env('LOG_LEVEL', "DEBUG")
     LOG_MAX_SIZE = int(get_env('LOG_MAX_SIZE', 1048576))
@@ -48,7 +48,7 @@ class ProductionConfig(Config):
     
     DEBUG = False
     TESTING = False
-    HOST = get_env('PRD_HOST', "127.0.0.1")
+    HOST = get_env('PRD_HOST', "0.0.0.0")
     PORT = get_env('PRD_PORT', 5000)
     
     LOG_LEVEL=get_env('LOG_LEVEL', "DEBUG")
@@ -64,8 +64,8 @@ class TestingConfig(Config):
     
     DEBUG = False
     TESTING = False
-    HOST = get_env('HML_HOST', "127.0.0.1")
-    PORT = get_env('HML_PORT', 5000)
+    HOST = get_env('HML_HOST', "0.0.0.0")
+    PORT = get_env('HML_PORT', 4000)
     
     LOG_LEVEL=get_env('LOG_LEVEL', "DEBUG")
     
