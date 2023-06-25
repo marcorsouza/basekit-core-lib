@@ -81,7 +81,7 @@ class BaseController(ABC):
             return self.build_error_response(str(e), 500)
     
     def build_success_response(self, data, status_code=200):
-        return make_response(jsonify({"success": True, "data": data}), status_code)
+        return make_response(jsonify(data), status_code)
     
     def build_error_response(self, error_message, status_code):
-        return make_response(jsonify({"success": False, "error": error_message}), status_code)
+        return make_response(jsonify({"error": error_message}), status_code)
