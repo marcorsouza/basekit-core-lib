@@ -13,7 +13,14 @@ class BaseController(ABC):
     @log_decorator
     def get_all(self):
         try:
-            data = self.service.get_all()
+            filters = None
+            print(request)
+            if request.content_length  and request.is_json:
+                filters = request.get_json()
+                print(f'filtros {filters}')
+                
+            data = self.service.get_all(filters)
+            
             logger.info("get_all successful")
             return self.build_success_response(data)
         except Exception as e:

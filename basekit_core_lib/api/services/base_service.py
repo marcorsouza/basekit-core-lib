@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
 from basekit_core_lib.config.helpers import db, config
+from sqlalchemy import or_, not_, func
+from typing import Optional
+
 class BaseService(ABC):
     
     def __init__(self,model_data: db.Model = None, model_schema = None) -> None:
@@ -7,10 +10,51 @@ class BaseService(ABC):
         self.model_schema = model_schema
         self.config  = config
     
-    def _get_all(self, filters = None):
-        if filters is None:
+    def _get_all(self, filters=None):
+        
+        if filters is None or not filters:
             return self.model_data.query.all()
-        return self.model_data.filter(filters)
+
+        query = self.model_data.query
+
+        if filters:
+            for field, value in filters.items():
+                query = self._apply_filter(query, field, value)
+
+        results = query.all()
+        return results
+
+    def _apply_filter(self, query, field, value):
+        if field == "in":
+            return self._apply_in_filter(query, value)
+        elif field == "like":
+            return self._apply_like_filter(query, value)
+        elif field in ["eq", "equal", "equals"]:
+            return self._apply_eq_filter(query, value)
+        elif field in ["not"]:
+            return self._apply_not_filter(query, value)
+        else:
+            return self._apply_eq_filter(query, {field: value})
+
+    def _apply_in_filter(self, query, value):
+        for subfield, subvalue in value.items():
+            query = query.filter(getattr(self.model_data, subfield).in_(subvalue))
+        return query
+
+    def _apply_like_filter(self, query, value):
+        for subfield, subvalue in value.items():
+            query = query.filter(getattr(self.model_data, subfield).like(f"%{subvalue}%"))
+        return query
+
+    def _apply_eq_filter(self, query, value):
+        for subfield, subvalue in value.items():
+            query = query.filter(getattr(self.model_data, subfield) == subvalue)
+        return query
+    
+    def _apply_not_filter(self, query, value):
+        for subfield, subvalue in value.items():
+            query = query.filter(getattr(self.model_data, subfield) != subvalue)
+        return query
 
     def _get_by_id(self, id):
         return self.model_data.query.get(id)
