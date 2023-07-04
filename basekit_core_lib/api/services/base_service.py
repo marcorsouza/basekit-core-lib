@@ -22,6 +22,10 @@ class BaseService(ABC):
         return results
 
     def _apply_filter(self, query, field, value):
+        
+        if field not in ["in", "like", "eq", "not", "or"]:
+            raise ValueError(f"Campo de filtro inválido: {field}")
+    
         if field == "in":
             return self._apply_in_filter(query, value)
         elif field == "like":
@@ -60,20 +64,50 @@ class BaseService(ABC):
         
     def _apply_or_filter(self, query, value):
         or_filters = []
+
         for subfield, subvalue in value.items():
             if subfield == "like":
-                for field, val in subvalue.items():
-                    or_filters.append(self._get_attr(field).like(f"%{val}%"))
+                or_filters.extend(self._build_like_filters(subvalue))
             elif subfield == "eq":
-                for field, val in subvalue.items():
-                    or_filters.append(self._get_attr(field) == val)
+                or_filters.extend(self._build_eq_filters(subvalue))
             elif subfield == "not":
-                for field, val in subvalue.items():
-                    or_filters.append(self._get_attr(field) != val)
+                or_filters.extend(self._build_not_filters(subvalue))
             elif subfield == "in":
-                for field, val in subvalue.items():
-                    or_filters.append(self._get_attr(field).in_(val))
+                or_filters.extend(self._build_in_filters(subvalue))
+
         return query.filter(or_(*or_filters))
+
+    def _build_like_filters(self, value):
+        filters = []
+
+        for field, val in value.items():
+            filters.append(self._get_attr(field).like(f"%{val}%"))
+
+        return filters
+
+    def _build_eq_filters(self, value):
+        filters = []
+
+        for field, val in value.items():
+            filters.append(self._get_attr(field) == val)
+
+        return filters
+
+    def _build_not_filters(self, value):
+        filters = []
+
+        for field, val in value.items():
+            filters.append(self._get_attr(field) != val)
+
+        return filters
+
+    def _build_in_filters(self, value):
+        filters = []
+
+        for field, val in value.items():
+            filters.append(self._get_attr(field).in_(val))
+
+        return filters
     
     def _in_filter(self, value):
         attr_list = []
