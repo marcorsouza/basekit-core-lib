@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='basekit',
-    version='1.0.4',
+    version='1.0.5',
     description='Uma biblioteca para auxiliar no desenvolvimento de aplicativos Python, fornecendo funcionalidades comuns e utilitários',
     author='Marco Souza',
     author_email='marco.rsouza@gmail.com',
