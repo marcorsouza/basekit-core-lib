@@ -11,10 +11,6 @@ class BaseService(ABC):
         self.config  = config
     
     def _get_all(self, filters=None):
-        
-        if filters is None or not filters:
-            return self.model_data.query.all()
-
         query = self.model_data.query
 
         if filters:
@@ -22,6 +18,7 @@ class BaseService(ABC):
                 query = self._apply_filter(query, field, value)
 
         results = query.all()
+        print(query.statement)
         return results
 
     def _apply_filter(self, query, field, value):
@@ -31,31 +28,77 @@ class BaseService(ABC):
             return self._apply_like_filter(query, value)
         elif field in ["eq", "equal", "equals"]:
             return self._apply_eq_filter(query, value)
-        elif field in ["not"]:
+        elif field == "not":
             return self._apply_not_filter(query, value)
+        elif field == "or":
+            return self._apply_or_filter(query, value)
         else:
             return self._apply_eq_filter(query, {field: value})
 
+    def _get_attr(self, subfield):
+        return getattr(self.model_data, subfield)
+
     def _apply_in_filter(self, query, value):
-        for subfield, subvalue in value.items():
-            query = query.filter(getattr(self.model_data, subfield).in_(subvalue))
+        for attr_filter in self._in_filter(value):
+            query = query.filter(attr_filter)
         return query
 
     def _apply_like_filter(self, query, value):
-        for subfield, subvalue in value.items():
-            query = query.filter(getattr(self.model_data, subfield).like(f"%{subvalue}%"))
+        for attr_filter in self._like_filter(value):
+            query = query.filter(attr_filter)
         return query
 
     def _apply_eq_filter(self, query, value):
-        for subfield, subvalue in value.items():
-            query = query.filter(getattr(self.model_data, subfield) == subvalue)
-        return query
-    
-    def _apply_not_filter(self, query, value):
-        for subfield, subvalue in value.items():
-            query = query.filter(getattr(self.model_data, subfield) != subvalue)
+        for attr_filter in self._eq_filter(value):
+            query = query.filter(attr_filter)
         return query
 
+    def _apply_not_filter(self, query, value):
+        for attr_filter in self._not_filter(value):
+            query = query.filter(attr_filter)
+        return query
+        
+    def _apply_or_filter(self, query, value):
+        or_filters = []
+        for subfield, subvalue in value.items():
+            if subfield == "like":
+                for field, val in subvalue.items():
+                    or_filters.append(self._get_attr(field).like(f"%{val}%"))
+            elif subfield == "eq":
+                for field, val in subvalue.items():
+                    or_filters.append(self._get_attr(field) == val)
+            elif subfield == "not":
+                for field, val in subvalue.items():
+                    or_filters.append(self._get_attr(field) != val)
+            elif subfield == "in":
+                for field, val in subvalue.items():
+                    or_filters.append(self._get_attr(field).in_(val))
+        return query.filter(or_(*or_filters))
+    
+    def _in_filter(self, value):
+        attr_list = []
+        for subfield, subvalue in value.items():
+            attr_list.append(self._get_attr(subfield).in_(subvalue))
+        return attr_list
+
+    def _like_filter(self, value):
+        attr_list = []
+        for subfield, subvalue in value.items():
+            attr_list.append(self._get_attr(subfield).like(f"%{subvalue}%"))
+        return attr_list
+
+    def _eq_filter(self, value):
+        attr_list = []
+        for subfield, subvalue in value.items():
+            attr_list.append(self._get_attr(subfield) == subvalue)
+        return attr_list
+
+    def _not_filter(self, value):
+        attr_list = []
+        for subfield, subvalue in value.items():
+            attr_list.append(self._get_attr(subfield) != subvalue)
+        return attr_list
+        
     def _get_by_id(self, id):
         return self.model_data.query.get(id)
     
