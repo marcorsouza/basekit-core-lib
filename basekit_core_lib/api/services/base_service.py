@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
+from basekit_core_lib.api.services.filter_builder import FilterBuilder
 from basekit_core_lib.config.helpers import db, config
-from sqlalchemy import or_, not_, func
+from sqlalchemy import or_,and_, not_, func
 from typing import Optional
 
 class BaseService(ABC):
@@ -8,8 +9,9 @@ class BaseService(ABC):
     def __init__(self,model_data: db.Model = None, model_schema = None) -> None:
         self.model_data = model_data
         self.model_schema = model_schema
+        self.filter_builder = FilterBuilder(model_data)
         self.config  = config
-    
+        
     def _get_all(self, filters=None):
         query = self.model_data.query
 
@@ -22,116 +24,84 @@ class BaseService(ABC):
         return results
 
     def _apply_filter(self, query, field, value):
-        
-        if field not in ["in", "like", "eq", "not", "or"]:
+        if field == "or" or field == "and":
+            return self.apply_logical_filter(query, field, self.filter_builder.build_logical_filters(value))
+        elif field not in ["in", "like", "eq", "not", "not_in", "gt", "lt", "between", "isNull"]:
             raise ValueError(f"Campo de filtro inválido: {field}")
-    
+
         if field == "in":
-            return self._apply_in_filter(query, value)
+            return self.apply_in_filter(query, value)
+        elif field == "not_in":
+            return self.apply_not_in_filter(query, value)
+        elif field == "gt":
+            return self.apply_gt_filter(query, value)
+        elif field == "lt":
+            return self.apply_lt_filter(query, value)
+        elif field == "between":
+            return self.apply_between_filter(query, value)
+        elif field == "isNull":
+            return self.apply_is_null_filter(query, value)
         elif field == "like":
-            return self._apply_like_filter(query, value)
+            return self.apply_like_filter(query, value)
         elif field in ["eq", "equal", "equals"]:
-            return self._apply_eq_filter(query, value)
+            return self.apply_eq_filter(query, value)
         elif field == "not":
-            return self._apply_not_filter(query, value)
-        elif field == "or":
-            return self._apply_or_filter(query, value)
+            return self.apply_not_filter(query, value)
         else:
-            return self._apply_eq_filter(query, {field: value})
+            return self.apply_eq_filter(query, {field: value})
 
-    def _get_attr(self, subfield):
-        return getattr(self.model_data, subfield)
+    def apply_logical_filter(self, query, operator, filters):
+        if operator == "or":
+            return query.filter(or_(*filters))
+        elif operator == "and":
+            return query.filter(and_(*filters))
+        else:
+            raise ValueError(f"Operador lógico inválido: {operator}")
 
-    def _apply_in_filter(self, query, value):
-        for attr_filter in self._in_filter(value):
+    def apply_in_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_in_filters(value):
             query = query.filter(attr_filter)
         return query
 
-    def _apply_like_filter(self, query, value):
-        for attr_filter in self._like_filter(value):
+    def apply_not_in_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_not_in_filters(value):
             query = query.filter(attr_filter)
         return query
 
-    def _apply_eq_filter(self, query, value):
-        for attr_filter in self._eq_filter(value):
+    def apply_gt_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_gt_filters(value):
             query = query.filter(attr_filter)
         return query
 
-    def _apply_not_filter(self, query, value):
-        for attr_filter in self._not_filter(value):
+    def apply_lt_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_lt_filters(value):
             query = query.filter(attr_filter)
         return query
-        
-    def _apply_or_filter(self, query, value):
-        or_filters = []
 
-        for subfield, subvalue in value.items():
-            if subfield == "like":
-                or_filters.extend(self._build_like_filters(subvalue))
-            elif subfield == "eq":
-                or_filters.extend(self._build_eq_filters(subvalue))
-            elif subfield == "not":
-                or_filters.extend(self._build_not_filters(subvalue))
-            elif subfield == "in":
-                or_filters.extend(self._build_in_filters(subvalue))
+    def apply_between_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_between_filters(value):
+            query = query.filter(attr_filter)
+        return query
 
-        return query.filter(or_(*or_filters))
+    def apply_is_null_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_is_null_filters(value):
+            query = query.filter(attr_filter)
+        return query
 
-    def _build_like_filters(self, value):
-        filters = []
+    def apply_like_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_like_filters(value):
+            query = query.filter(attr_filter)
+        return query
 
-        for field, val in value.items():
-            filters.append(self._get_attr(field).like(f"%{val}%"))
+    def apply_eq_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_eq_filters(value):
+            query = query.filter(attr_filter)
+        return query
 
-        return filters
-
-    def _build_eq_filters(self, value):
-        filters = []
-
-        for field, val in value.items():
-            filters.append(self._get_attr(field) == val)
-
-        return filters
-
-    def _build_not_filters(self, value):
-        filters = []
-
-        for field, val in value.items():
-            filters.append(self._get_attr(field) != val)
-
-        return filters
-
-    def _build_in_filters(self, value):
-        filters = []
-
-        for field, val in value.items():
-            filters.append(self._get_attr(field).in_(val))
-
-        return filters
-    
-    def _in_filter(self, value):
-        attr_list = []
-        for subfield, subvalue in value.items():
-            attr_list.append(self._get_attr(subfield).in_(subvalue))
-        return attr_list
-
-    def _like_filter(self, value):
-        attr_list = []
-        for subfield, subvalue in value.items():
-            attr_list.append(self._get_attr(subfield).like(f"%{subvalue}%"))
-        return attr_list
-
-    def _eq_filter(self, value):
-        attr_list = []
-        for subfield, subvalue in value.items():
-            attr_list.append(self._get_attr(subfield) == subvalue)
-        return attr_list
-
-    def _not_filter(self, value):
-        attr_list = []
-        for subfield, subvalue in value.items():
-            attr_list.append(self._get_attr(subfield) != subvalue)
-        return attr_list
+    def apply_not_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_not_filters(value):
+            query = query.filter(attr_filter)
+        return query
         
     def _get_by_id(self, id):
         return self.model_data.query.get(id)

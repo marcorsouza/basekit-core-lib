@@ -14,7 +14,6 @@ class BaseController(ABC):
     def get_all(self):
         try:
             filters = None
-            print(request)
             if request.content_length  and request.is_json:
                 filters = request.get_json()
                 print(f'filtros {filters}')
