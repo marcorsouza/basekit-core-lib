@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from basekit_core_lib.api.services.filter_builder import FilterBuilder
+from basekit_core_lib.utils.filter_builder import FilterBuilder
 from basekit_core_lib.config.helpers import db, config
 from sqlalchemy import or_,and_, not_, func
 from typing import Optional
