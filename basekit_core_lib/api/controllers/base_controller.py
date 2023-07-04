@@ -1,93 +1,174 @@
-from sqlalchemy.exc import IntegrityError
-from flask import request, jsonify, make_response
-import inspect
-from abc import ABC
+from abc import ABC, abstractmethod
+from basekit_core_lib.api.services.filter_builder import FilterBuilder
+from basekit_core_lib.config.helpers import db, config
+from sqlalchemy import or_,and_, not_, func
+from typing import Optional
 
-from basekit_core_lib.api.middlewares.logger_middleware import log_decorator
-from basekit_core_lib.config.helpers import logger
+class BaseService(ABC):
+    
+    def __init__(self,model_data: db.Model = None, model_schema = None) -> None:
+        self.model_data = model_data
+        self.model_schema = model_schema
+        self.filter_builder = FilterBuilder(model_data)
+        self.config  = config
+        
+    def _get_all(self, filters=None):
+        query = self.model_data.query
 
-class BaseController(ABC):
-    def __init__(self, service):
-        self.service = service        
-            
-    @log_decorator
-    def get_all(self):
-        try:
-            filters = None
-            if request.content_length  and request.is_json:
-                filters = request.get_json()
-                print(f'filtros {filters}')
+        if filters:
+            for field, value in filters.items():
+                if field == "order_by":
+                    query = self._apply_order_by(query, value)
+                else:
+                    for _field, val in value.items():
+                        query = self._apply_filter(query, _field, val)
+
+        results = query.all()
+        print(query.statement)
+        return results
+    
+    def _apply_order_by(self, query, order_by):
+        for order in order_by:
+            field = order.get("field")
+            order_type = order.get("order", "asc")  # Valor padrão "asc" se não for especificado
+
+            if field:
+                column = getattr(self.model_data, field)
+                if order_type == "desc":
+                    column = column.desc()
+
+                query = query.order_by(column)
+
+        return query
+
+    def _apply_filter(self, query, field, value):
+        if field == "or" or field == "and":
+            return self.apply_logical_filter(query, field, self.filter_builder.build_logical_filters(value))
+        elif field not in ["in", "like", "eq", "not", "not_in", "gt", "lt", "between", "isNull"]:
+            raise ValueError(f"Campo de filtro inválido: {field}")
                 
-            data = self.service.get_all(filters)
-            
-            logger.info("get_all successful")
-            return self.build_success_response(data)
-        except Exception as e:
-            logger.error(f"get_all error: {str(e)}")
-            return self.build_error_response(str(e), 500)
+        if field == "in":
+            return self.apply_in_filter(query, value)
+        elif field == "not_in":
+            return self.apply_not_in_filter(query, value)
+        elif field == "gt":
+            return self.apply_gt_filter(query, value)
+        elif field == "lt":
+            return self.apply_lt_filter(query, value)
+        elif field == "between":
+            return self.apply_between_filter(query, value)
+        elif field == "isNull":
+            return self.apply_is_null_filter(query, value)
+        elif field == "like":
+            return self.apply_like_filter(query, value)
+        elif field in ["eq", "equal", "equals"]:
+            return self.apply_eq_filter(query, value)
+        elif field == "not":
+            return self.apply_not_filter(query, value)
+        else:
+            return self.apply_eq_filter(query, {field: value})
+
+    def apply_logical_filter(self, query, operator, filters):
+        if operator == "or":
+            return query.filter(or_(*filters))
+        elif operator == "and":
+            return query.filter(and_(*filters))
+        else:
+            raise ValueError(f"Operador lógico inválido: {operator}")
+
+    def apply_in_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_in_filters(value):
+            query = query.filter(attr_filter)
+        return query
+
+    def apply_not_in_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_not_in_filters(value):
+            query = query.filter(attr_filter)
+        return query
+
+    def apply_gt_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_gt_filters(value):
+            query = query.filter(attr_filter)
+        return query
+
+    def apply_lt_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_lt_filters(value):
+            query = query.filter(attr_filter)
+        return query
+
+    def apply_between_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_between_filters(value):
+            query = query.filter(attr_filter)
+        return query
+
+    def apply_is_null_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_is_null_filters(value):
+            query = query.filter(attr_filter)
+        return query
+
+    def apply_like_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_like_filters(value):
+            query = query.filter(attr_filter)
+        return query
+
+    def apply_eq_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_eq_filters(value):
+            query = query.filter(attr_filter)
+        return query
+
+    def apply_not_filter(self, query, value):
+        for attr_filter in self.filter_builder.build_not_filters(value):
+            query = query.filter(attr_filter)
+        return query
+        
+    def _get_by_id(self, id):
+        return self.model_data.query.get(id)
     
-    @log_decorator
+    def _create(self, model_data):
+        model = self.model_data(**model_data)        
+        db.session.add(model)
+        db.session.commit()
+        return model
+    
+    def _update(self, model, model_data, schema_update = None):        
+        if schema_update is None:
+            schema_update = self.model_schema
+        
+        for key, value in model_data.items():
+            if key in schema_update.fields:  # Verifica se o campo está presente no esquema de atualização
+                setattr(model, key, value)
+        db.session.commit()
+
+    def _delete(self, id):
+        model = self._get_by_id(id)
+        if model:
+            db.session.delete(model)
+            db.session.commit()
+            return True
+        return False
+    
+    @abstractmethod
+    def get_all(self):
+        pass
+
+    @abstractmethod
     def get_by_id(self, id):
-        try:
-            data = self.service.get_by_id(id)
-            if data:
-                logger.info("get_by_id successful")
-                return self.build_success_response(data)
-            else:
-                logger.error(f"get_by_id error: Object with id {id} not found",)
-                return self.build_error_response(f"Object with id {id} not found", 404)
-        except Exception as e:
-            logger.error(f"get_by_id error: {str(e)}")
-            return self.build_error_response(str(e), 500)
+        pass
     
-    @log_decorator
+    @abstractmethod
     def create(self):
-        try:
-            data = request.get_json()
-            obj = self.service.create(data)
-            logger.info("create successful")
-            return self.build_success_response(obj, 201)
-        except IntegrityError as e:
-            logger.error("create error: Integrity error")
-            return self.build_error_response("Integrity error", 400)
-        except Exception as e:
-            logger.error(f"create error: {str(e)}")
-            return self.build_error_response(str(e), 500)
+        pass
     
-    @log_decorator
+    @abstractmethod
     def update(self, id):
-        try:
-            data = request.get_json()
-            obj = self.service.update(id, data)
-            if obj:
-                logger.info("update successful")
-                return self.build_success_response(obj)
-            else:
-                logger.error(f"update error: Object with id {id} not found")
-                return self.build_error_response(f"Object with id {id} not found", 404)
-        except IntegrityError as e:
-            logger.error("update error: Integrity error")
-            return self.build_error_response("Integrity error", 400)
-        except Exception as e:
-            logger.error(f"update error: {str(e)}")
-            return self.build_error_response(str(e), 500)
-    
-    @log_decorator
+       pass
+
+    @abstractmethod
     def delete(self, id):
-        try:
-            success = self.service.delete(id)
-            if success:
-                logger.info("delete successful")
-                return self.build_success_response({"message": "Object deleted successfully"})
-            else:
-                logger.error(f"delete error: Object with id {id} not found")
-                return self.build_error_response(f"Object with id {id} not found", 404)
-        except Exception as e:
-            logger.error(f"delete error: {str(e)}")
-            return self.build_error_response(str(e), 500)
+        pass
     
-    def build_success_response(self, data, status_code=200):
-        return make_response(jsonify(data), status_code)
-    
-    def build_error_response(self, error_message, status_code):
-        return make_response(jsonify({"error": error_message}), status_code)
+    def is_valid(self, model_schema, model_data):
+        errors = model_schema.validate(model_data)
+        if errors:
+            ValueError(errors)
+        return True
