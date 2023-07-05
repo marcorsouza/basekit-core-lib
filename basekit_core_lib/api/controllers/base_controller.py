@@ -39,6 +39,22 @@ class BaseController(ABC):
         except Exception as e:
             logger.error(f"get_by_id error: {str(e)}")
             return self.build_error_response(str(e), 500)
+        
+    @log_decorator
+    def paged_list(self):
+        try:
+            filters = None
+            if request.content_length  and request.is_json:
+                filters = request.get_json()
+                print(f'filtros {filters}')
+                
+            data = self.service.get_all(filters)
+            
+            logger.info("get_all successful")
+            return self.build_success_response(data)
+        except Exception as e:
+            logger.error(f"get_all error: {str(e)}")
+            return self.build_error_response(str(e), 500)
     
     @log_decorator
     def create(self):
