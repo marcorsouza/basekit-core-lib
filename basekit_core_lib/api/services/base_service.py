@@ -26,24 +26,26 @@ class BaseService(ABC):
         
     def _get_all(self):
         """
-        Método interno para obter todos os registros do modelo com base nos filtros fornecidos.
+        Método interno para obter todos os registros do modelo.
+
         Returns:
-            results: Uma lista contendo todos os registros do modelo que atendem aos filtros especificados.
+            results: Uma lista contendo todos os registros do modelo.
         """
         
         query = self.model_data.query
         results = query.all()
         return results
-    
+
     def _paged_list(self, filters=None):
         """
-        Método interno para obter todos os registros do modelo com base nos filtros fornecidos.
+        Método interno para obter registros paginados do modelo com base nos filtros fornecidos.
 
         Args:
             filters (dict): Um dicionário contendo os filtros a serem aplicados na consulta.
 
         Returns:
-            results: Uma lista contendo todos os registros do modelo que atendem aos filtros especificados.
+            results: Uma lista contendo os registros do modelo que atendem aos filtros especificados.
+            pagination_info: Um dicionário contendo informações sobre a paginação, incluindo o total de registros.
         """
         
         query = self.model_data.query
@@ -59,13 +61,15 @@ class BaseService(ABC):
                         query = self._apply_filter(query, _field, val)
 
         if not pagination is None:
-            return self._apply_pagination(query, pagination)
+            paginated_results, pagination_info = self._apply_pagination(query, pagination)
+            return paginated_results, pagination_info
         
+        total_records = query.count()
         results = query.all()
         print(query.statement)
         
-        return results
-    
+        return results, {"total_records": total_records}
+
     def _apply_pagination(self, query, pagination):
         """
         Método interno para aplicar a paginação aos resultados da consulta.
@@ -76,6 +80,7 @@ class BaseService(ABC):
 
         Returns:
             results: Uma lista contendo os resultados paginados da consulta.
+            pagination_info: Um dicionário contendo informações sobre a paginação, incluindo o total de registros.
         """
         
         try:
@@ -87,12 +92,13 @@ class BaseService(ABC):
             if per_page <= 0:
                 per_page = 10
             
-            print(page)
-            print(per_page)
+            total_records = query.count()            
             paginated_query = query.paginate(page=page, per_page=per_page)            
             results = paginated_query.items
             print(query.statement)
-            return results
+            
+            pagination_info = {"total_records": total_records}
+            return results, pagination_info
         except Exception as e:
             return None
     
