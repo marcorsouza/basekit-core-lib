@@ -24,7 +24,18 @@ class BaseService(ABC):
         self.filter_builder = FilterBuilder(model_data)
         self.config  = config
         
-    def _get_all(self, filters=None):
+    def _get_all(self):
+        """
+        Método interno para obter todos os registros do modelo com base nos filtros fornecidos.
+        Returns:
+            results: Uma lista contendo todos os registros do modelo que atendem aos filtros especificados.
+        """
+        
+        query = self.model_data.query
+        results = query.all()
+        return results
+    
+    def _paged_list(self, filters=None):
         """
         Método interno para obter todos os registros do modelo com base nos filtros fornecidos.
 
@@ -244,6 +255,10 @@ class BaseService(ABC):
     
     @abstractmethod
     def get_all(self):
+        pass
+    
+    @abstractmethod
+    def paged_list(self):
         pass
 
     @abstractmethod
