@@ -61,14 +61,13 @@ class BaseService(ABC):
                         query = self._apply_filter(query, _field, val)
 
         if not pagination is None:
-            paginated_results, pagination_info = self._apply_pagination(query, pagination)
-            return paginated_results, pagination_info
+            return self._apply_pagination(query, pagination)
         
         total_records = query.count()
         results = query.all()
         print(query.statement)
         
-        return results, {"total_records": total_records}
+        return results, total_records
 
     def _apply_pagination(self, query, pagination):
         """
@@ -97,8 +96,7 @@ class BaseService(ABC):
             results = paginated_query.items
             print(query.statement)
             
-            pagination_info = {"total_records": total_records}
-            return results, pagination_info
+            return results, total_records
         except Exception as e:
             return None
     
