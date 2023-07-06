@@ -60,6 +60,8 @@ class BaseController(ABC):
     def create(self):
         try:
             data = request.get_json()
+            data = self._extract_inner_content(data)
+                    
             obj = self.service.create(data)
             logger.info("create successful")
             return self.build_success_response(obj, 201)
@@ -74,6 +76,7 @@ class BaseController(ABC):
     def update(self, id):
         try:
             data = request.get_json()
+            data = self._extract_inner_content(data)
             obj = self.service.update(id, data)
             if obj:
                 logger.info("update successful")
@@ -107,3 +110,12 @@ class BaseController(ABC):
     
     def build_error_response(self, error_message, status_code):
         return make_response(jsonify({"error": error_message}), status_code)
+    
+    def _extract_inner_content(self, data):
+        if isinstance(data, dict) and len(data) > 0:
+            for value in data.values():
+                if isinstance(value, dict):
+                    return value
+            return data
+        else:
+            return data
