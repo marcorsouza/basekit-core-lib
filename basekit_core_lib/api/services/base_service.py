@@ -265,5 +265,5 @@ class BaseService(ABC):
     def is_valid(self, model_schema, model_data):
         errors = model_schema.validate(model_data)
         if errors:
-            ValueError(errors)
+           raise  ValueError(errors)
         return True
