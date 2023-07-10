@@ -12,9 +12,8 @@ class BaseController(ABC):
             
     @log_decorator
     def get_all(self):
-        try:
-            filters = None                
-            data = self.service.get_all(filters)
+        try:               
+            data = self.service.get_all()
             
             logger.info("get_all successful")
             return self.build_success_response(data)

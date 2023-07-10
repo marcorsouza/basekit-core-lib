@@ -12,6 +12,7 @@ class BaseService(ABC):
 
     Métodos abstratos:
         - get_all(): Retorna todos os registros do modelo.
+        - paged_list(filters): Retorna todos os registros do modelo (paged_list).
         - get_by_id(id): Retorna um registro específico do modelo pelo ID.
         - create(): Cria um novo registro do modelo.
         - update(id): Atualiza um registro existente do modelo pelo ID.
@@ -262,7 +263,7 @@ class BaseService(ABC):
         pass
     
     @abstractmethod
-    def paged_list(self):
+    def paged_list(self, filters=None):
         pass
 
     @abstractmethod
